@@ -1,0 +1,98 @@
+<div id="cpu-card" class="card">
+    <h3>CPU</h3>
+    <div class="value">{{ stats.cpu }}%</div>
+    <div class="bar-container">
+        <div class="bar {{ 'warning' if stats.cpu > 70 else 'danger' if stats.cpu > 90 else '' }}" 
+             style="width: {{ stats.cpu }}%"></div>
+    </div>
+</div>
+<div id="ram-card" class="card">
+    <h3>RAM</h3>
+    <div class="value small">{{ stats.ram_used }}GB / {{ stats.ram_total }}GB</div>
+    <div class="bar-container">
+        <div class="bar {{ 'warning' if stats.ram_percent > 70 else 'danger' if stats.ram_percent > 90 else '' }}" 
+             style="width: {{ stats.ram_percent }}%"></div>
+    </div>
+    <div class="status">{{ stats.ram_percent }}% used</div>
+</div>
+<div id="disk-card" class="card">
+    <h3>Disk</h3>
+    <div class="value small">{{ stats.disk_used }}GB / {{ stats.disk_total }}GB</div>
+    <div class="bar-container">
+        <div class="bar {{ 'warning' if stats.disk_percent > 70 else 'danger' if stats.disk_percent > 90 else '' }}" 
+             style="width: {{ stats.disk_percent }}%"></div>
+    </div>
+    <div class="status">{{ stats.disk_percent }}% used</div>
+</div>
+<div id="load-card" class="card">
+    <h3>Load</h3>
+    <div class="value small">{{ stats.load['1m'] }} / {{ stats.load['5m'] }} / {{ stats.load['15m'] }}</div>
+</div>
+
+<div class="grid">
+    {% if stats.temperature %}
+    <div class="card">
+        <h3>Temperature</h3>
+        <div class="value small">
+            {% for temp in stats.temperature %}
+            {{ temp }}°C{% if not loop.last %}, {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+    
+    {% if stats.failed_services %}
+    <div class="card">
+        <h3>Failed Services</h3>
+        <ul class="packages">
+            {% for svc in stats.failed_services %}
+            <li class="danger">{{ svc }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+</div>
+
+{% if stats.docker_stats %}
+<div class="grid">
+    <div class="card full-width">
+        <h3>Docker Containers</h3>
+        <table class="docker-table">
+            <thead>
+                <tr>
+                    <th>Container</th>
+                    <th>CPU</th>
+                    <th>Memory</th>
+                    <th>Mem Usage</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for c in stats.docker_stats %}
+                <tr>
+                    <td>{{ c.name }}</td>
+                    <td>{{ c.cpu }}%</td>
+                    <td>{{ c.mem }}%</td>
+                    <td>{{ c.mem_usage }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+{% if stats.network_traffic %}
+<div class="grid">
+    <div class="card">
+        <h3>Network Traffic</h3>
+        <ul class="network">
+            {% for iface, data in stats.network_traffic.items() %}
+            <li>
+                <span>{{ iface }}</span>
+                <span>↑ {{ data.bytes_sent }}MB ↓ {{ data.bytes_recv }}MB</span>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>
+{% endif %}

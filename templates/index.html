@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }}</title>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <style>
+        :root {
+            --bg: #1a1a2e;
+            --bg-card: #16213e;
+            --text: #eee;
+            --text-dim: #888;
+            --accent: #00d9ff;
+            --success: #00ff88;
+            --warning: #ffaa00;
+            --danger: #ff4444;
+            --bar-bg: #0f3460;
+        }
+        [data-theme="light"] {
+            --bg: #f5f5f5;
+            --bg-card: #fff;
+            --text: #333;
+            --text-dim: #666;
+            --accent: #0077aa;
+            --success: #00aa55;
+            --warning: #cc8800;
+            --danger: #cc3333;
+            --bar-bg: #ddd;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            padding: 15px;
+            transition: background 0.3s, color 0.3s;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        h1 { color: var(--accent); font-size: 24px; }
+        .theme-toggle {
+            background: var(--bg-card);
+            border: none;
+            color: var(--text);
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+        .card {
+            background: var(--bg-card);
+            border-radius: 8px;
+            padding: 15px;
+            transition: background 0.3s;
+        }
+        .card.full-width { grid-column: 1 / -1; }
+        .card h3 {
+            color: var(--text-dim);
+            font-size: 11px;
+            text-transform: uppercase;
+            margin-bottom: 6px;
+        }
+        .card .value { font-size: 24px; font-weight: bold; }
+        .card .value.small { font-size: 16px; }
+        .online { color: var(--success); }
+        .offline { color: var(--danger); }
+        .bar-container {
+            background: var(--bar-bg);
+            height: 6px;
+            border-radius: 3px;
+            margin-top: 8px;
+            overflow: hidden;
+        }
+        .bar {
+            height: 100%;
+            background: var(--accent);
+            transition: width 0.5s;
+        }
+        .bar.warning { background: var(--warning); }
+        .bar.danger { background: var(--danger); }
+        
+        .status { font-size: 12px; margin-top: 4px; color: var(--text-dim); }
+        
+        .packages, .processes, .network {
+            max-height: 150px;
+            overflow-y: auto;
+            font-size: 12px;
+            list-style: none;
+        }
+        .packages li, .processes li, .network li {
+            padding: 4px 0;
+            border-bottom: 1px solid var(--bar-bg);
+            display: flex;
+            justify-content: space-between;
+        }
+        .packages li.danger, .processes li.danger { color: var(--danger); }
+        
+        .timestamp { color: var(--text-dim); font-size: 11px; margin-top: 15px; }
+        
+        .ping-list { font-size: 12px; }
+        .ping-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 4px 0;
+            border-bottom: 1px solid var(--bar-bg);
+        }
+        .ping-item:last-child { border-bottom: none; }
+        .ping-ms { color: var(--success); font-weight: bold; }
+        .ping-item.offline { color: var(--danger); }
+        
+        .alert {
+            background: var(--danger);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            animation: pulse 1s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        .docker-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+        .docker-table th, .docker-table td {
+            padding: 6px;
+            text-align: left;
+            border-bottom: 1px solid var(--bar-bg);
+        }
+        .docker-table th { color: var(--text-dim); }
+        
+        canvas { width: 100%; height: 40px; }
+        
+        .refresh-indicator {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            font-size: 11px;
+            color: var(--text-dim);
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        .refresh-indicator.show { opacity: 1; }
+        
+        @media (max-width: 600px) {
+            .grid { grid-template-columns: 1fr 1fr; }
+            .card .value { font-size: 20px; }
+            h1 { font-size: 20px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>{{ title }}</h1>
+        <button class="theme-toggle" onclick="toggleTheme()">🌗</button>
+    </div>
+    
+    <div id="alerts">
+        {% if stats.alerts %}
+        <div class="alert">
+            {% for alert in stats.alerts %}{{ alert }}{% if not loop.last %}, {% endif %}{% endfor %}
+        </div>
+        {% endif %}
+    </div>
+    
+    <div class="grid">
+        <div class="card">
+            <h3>Ping</h3>
+            <div class="ping-list">
+                {% if stats.pings %}
+                {% for p in stats.pings %}
+                <div class="ping-item">
+                    <span>{{ p.host }}</span>
+                    <span class="ping-ms">{{ p.ms }}ms</span>
+                </div>
+                {% endfor %}
+                {% else %}
+                <div class="ping-item offline">No response</div>
+                {% endif %}
+            </div>
+        </div>
+        <div class="card" id="uptime-card">
+            <h3>Uptime</h3>
+            <div class="value small">{{ stats.uptime }}</div>
+        </div>
+        <div class="card" id="ip-card">
+            <h3>Tailscale IP</h3>
+            <div class="value small">{{ stats.tailscale_ip }}</div>
+        </div>
+    </div>
+
+    <div class="grid">
+        <div class="card">
+            <h3>CPU</h3>
+            <div class="value" id="cpu-value">{{ stats.cpu }}%</div>
+            <div class="bar-container">
+                <div class="bar {{ 'warning' if stats.cpu > 70 else 'danger' if stats.cpu > 90 else '' }}" 
+                     id="cpu-bar" style="width: {{ stats.cpu }}%"></div>
+            </div>
+        </div>
+        <div class="card">
+            <h3>RAM</h3>
+            <div class="value small" id="ram-value">{{ stats.ram_used }}GB / {{ stats.ram_total }}GB</div>
+            <div class="bar-container">
+                <div class="bar {{ 'warning' if stats.ram_percent > 70 else 'danger' if stats.ram_percent > 90 else '' }}" 
+                     id="ram-bar" style="width: {{ stats.ram_percent }}%"></div>
+            </div>
+            <div class="status" id="ram-percent">{{ stats.ram_percent }}% used</div>
+        </div>
+        <div class="card">
+            <h3>Disk</h3>
+            <div class="value small" id="disk-value">{{ stats.disk_used }}GB / {{ stats.disk_total }}GB</div>
+            <div class="bar-container">
+                <div class="bar {{ 'warning' if stats.disk_percent > 70 else 'danger' if stats.disk_percent > 90 else '' }}" 
+                     id="disk-bar" style="width: {{ stats.disk_percent }}%"></div>
+            </div>
+            <div class="status" id="disk-percent">{{ stats.disk_percent }}% used</div>
+        </div>
+    </div>
+
+    <div class="grid" id="stats-grid">
+        {% if stats.temperature %}
+        <div class="card">
+            <h3>Temperature</h3>
+            <div class="value small">
+                {% for temp in stats.temperature %}{{ temp }}°C{% if not loop.last %}, {% endif %}{% endfor %}
+            </div>
+        </div>
+        {% endif %}
+        
+        {% if stats.failed_services %}
+        <div class="card">
+            <h3>Failed Services</h3>
+            <ul class="packages">
+                {% for svc in stats.failed_services %}
+                <li class="danger">{{ svc }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+    </div>
+
+    {% if stats.docker_stats %}
+    <div class="grid">
+        <div class="card full-width">
+            <h3>Docker Containers</h3>
+            <table class="docker-table">
+                <thead>
+                    <tr><th>Container</th><th>CPU</th><th>Memory</th><th>Mem Usage</th></tr>
+                </thead>
+                <tbody>
+                    {% for c in stats.docker_stats %}
+                    <tr>
+                        <td>{{ c.name }}</td>
+                        <td>{{ c.cpu }}%</td>
+                        <td>{{ c.mem }}%</td>
+                        <td>{{ c.mem_usage }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if stats.network_traffic %}
+    <div class="grid">
+        <div class="card">
+            <h3>Network Traffic</h3>
+            <ul class="network">
+                {% for iface, data in stats.network_traffic.items() %}
+                <li><span>{{ iface }}</span><span>↑{{ data.bytes_sent }}MB ↓{{ data.bytes_recv }}MB</span></li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="grid">
+        <div class="card">
+            <h3>Upgradable Packages</h3>
+            {% if stats.upgradable_packages %}
+            <ul class="packages">
+                {% for pkg in stats.upgradable_packages %}
+                <li>{{ pkg }}</li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <div class="status">All up to date</div>
+            {% endif %}
+        </div>
+        <div class="card">
+            <h3>Top Processes</h3>
+            <ul class="processes">
+                {% for proc in stats.top_processes %}
+                <li>
+                    <span>{{ proc.name }}</span>
+                    <span>CPU:{{ proc.cpu }}% Mem:{{ proc.mem }}%</span>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+
+    <div class="timestamp">Last updated: {{ stats.timestamp }}</div>
+    
+    <div class="refresh-indicator" id="refresh-indicator">⟳</div>
+
+    <script>
+        function toggleTheme() {
+            const html = document.documentElement;
+            const current = html.getAttribute('data-theme');
+            const next = current === 'dark' ? 'light' : 'dark';
+            html.setAttribute('data-theme', next);
+            localStorage.setItem('theme', next);
+        }
+        
+        const savedTheme = localStorage.getItem('theme') || 'dark';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+        
+        function updateStats(data) {
+            document.getElementById('cpu-value').textContent = data.cpu + '%';
+            document.getElementById('cpu-bar').style.width = data.cpu + '%';
+            document.getElementById('ram-value').textContent = data.ram_used + 'GB / ' + data.ram_total + 'GB';
+            document.getElementById('ram-bar').style.width = data.ram_percent + '%';
+            document.getElementById('ram-percent').textContent = data.ram_percent + '% used';
+            document.getElementById('disk-value').textContent = data.disk_used + 'GB / ' + data.disk_total + 'GB';
+            document.getElementById('disk-bar').style.width = data.disk_percent + '%';
+            document.getElementById('disk-percent').textContent = data.disk_percent + '% used';
+            document.getElementById('load-value').textContent = data.load['1m'] + ' / ' + data.load['5m'] + ' / ' + data.load['15m'];
+        }
+        
+        setInterval(async function() {
+            try {
+                const res = await fetch('/api/stats');
+                const data = await res.json();
+                updateStats(data);
+            } catch(e) {}
+        }, 5000);
+    </script>
+</body>
+</html>
