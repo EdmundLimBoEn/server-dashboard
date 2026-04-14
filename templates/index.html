@@ -220,6 +220,20 @@
             box-shadow: 0 0 10px rgba(255, 71, 87, 0.15);
         }
         
+        /* Sparkline */
+        .sparkline {
+            width: 100%;
+            height: 40px;
+            margin-top: 8px;
+        }
+        .sparkline-label {
+            font-family: var(--font-mono);
+            font-size: 10px;
+            color: var(--text-muted);
+            margin-top: 4px;
+            text-align: right;
+        }
+        
         /* Ping */
         .ping-item {
             display: flex;
@@ -479,6 +493,8 @@
                          id="cpu-bar" style="width: {{ stats.cpu }}%"></div>
                 </div>
             </div>
+            <canvas class="sparkline" id="cpu-sparkline" data-history="{{ stats.cpu_history|join(',') }}"></canvas>
+            <div class="sparkline-label">Last 60 readings (5s interval)</div>
         </div>
         
         <div class="card">
@@ -494,6 +510,8 @@
                     <span>Swap {{ stats.swap_percent }}%</span>
                 </div>
             </div>
+            <canvas class="sparkline" id="ram-sparkline" data-history="{{ stats.ram_history|join(',') }}"></canvas>
+            <div class="sparkline-label">Last 60 readings (5s interval)</div>
         </div>
         
         <div class="card">
@@ -632,6 +650,8 @@
         const savedTheme = localStorage.getItem('theme') || 'dark';
         document.documentElement.setAttribute('data-theme', savedTheme);
         
+        initSparklines();
+        
         function updateTimeAgo() {
             const seconds = Math.floor((Date.now() - lastUpdate) / 1000);
             document.getElementById('update-time').textContent = seconds + 's';
@@ -645,6 +665,68 @@
             document.getElementById('ram-bar').style.width = data.ram_percent + '%';
             document.getElementById('disk-value').innerHTML = data.disk_used + '<span style="color: var(--text-dim);">/</span>' + data.disk_total + '<span style="font-size: 12px; color: var(--text-dim);">GB</span>';
             document.getElementById('disk-bar').style.width = data.disk_percent + '%';
+            
+            drawSparkline('cpu-sparkline', data.cpu_history);
+            drawSparkline('ram-sparkline', data.ram_history);
+        }
+        
+        function drawSparkline(canvasId, history) {
+            const canvas = document.getElementById(canvasId);
+            if (!canvas || !history || history.length < 2) return;
+            
+            const ctx = canvas.getContext('2d');
+            const rect = canvas.getBoundingClientRect();
+            canvas.width = rect.width;
+            canvas.height = rect.height || 40;
+            const w = canvas.width;
+            const h = canvas.height;
+            
+            const max = Math.max(...history, 100);
+            const min = 0;
+            
+            const styles = getComputedStyle(document.documentElement);
+            const color = styles.getPropertyValue('--accent').trim();
+            const dimColor = styles.getPropertyValue('--accent-dim').trim();
+            
+            const gradient = ctx.createLinearGradient(0, 0, w, 0);
+            gradient.addColorStop(0, dimColor);
+            gradient.addColorStop(1, color);
+            
+            ctx.clearRect(0, 0, w, h);
+            
+            ctx.beginPath();
+            ctx.moveTo(0, h);
+            
+            history.forEach((val, i) => {
+                const x = (i / (history.length - 1)) * w;
+                const y = h - ((val - min) / (max - min)) * h;
+                ctx.lineTo(x, y);
+            });
+            
+            ctx.lineTo(w, h);
+            ctx.closePath();
+            
+            const fillGrad = ctx.createLinearGradient(0, 0, 0, h);
+            fillGrad.addColorStop(0, color + '40');
+            fillGrad.addColorStop(1, color + '05');
+            ctx.fillStyle = fillGrad;
+            ctx.fill();
+            
+            ctx.beginPath();
+            history.forEach((val, i) => {
+                const x = (i / (history.length - 1)) * w;
+                const y = h - ((val - min) / (max - min)) * h;
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            });
+            ctx.strokeStyle = gradient;
+            ctx.lineWidth = 2;
+            ctx.stroke();
+        }
+        
+        function initSparklines() {
+            drawSparkline('cpu-sparkline', document.getElementById('cpu-sparkline').dataset.history.split(',').map(Number));
+            drawSparkline('ram-sparkline', document.getElementById('ram-sparkline').dataset.history.split(',').map(Number));
         }
         
         setInterval(function() {
