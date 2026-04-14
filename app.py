@@ -98,37 +98,49 @@ def get_pings():
 def get_temperature():
     try:
         result = subprocess.run(
-            ["sensors", "-u"],
+            [sensors, -u],
             capture_output=True,
             text=True,
             timeout=5,
         )
-        temps = []
-        for line in result.stdout.split("\n"):
-            if "temp1_input" in line or "temp2_input" in line or "temp3_input" in line or "temp4_input" in line or "temp5_input" in line:
+        cpu_temps = []
+        other_temps = []
+        
+        for line in result.stdout.split('\n'):
+            if 'temp' in line and '_input' in line:
                 try:
-                    temp = float(line.split(":")[1].strip())
+                    temp = float(line.split(':')[1].strip())
                     if temp > 0 and temp < 150:
-                        temps.append(round(temp, 1))
+                        line_lower = line.lower()
+                        if any(x in line_lower for x in ['package', 'core', 'cpu', 'coretemp', 'acpitz']):
+                            cpu_temps.append(temp)
+                        elif temp > 40:
+                            other_temps.append(temp)
                 except:
                     pass
-        if temps:
-            return list(set(temps))[:4]
+        
+        if cpu_temps:
+            return [round(max(cpu_temps), 1)]
+        if other_temps:
+            return [round(max(other_temps), 1)]
     except Exception:
         pass
     
     try:
-        result = subprocess.run(
-            ["cat", "/sys/class/thermal/thermal_zone0/temp"],
-            capture_output=True,
-            text=True,
-            timeout=2,
-        )
-        if result.returncode == 0:
-            temp = int(result.stdout.strip()) / 1000
-            return [round(temp, 1)]
-    except Exception:
+        temps = []
+        for i in range(8):
+            try:
+                with open(f'/sys/class/thermal/thermal_zone{i}/temp', 'r') as f:
+                    temp = int(f.read().strip()) / 1000
+                    if temp > 0 and temp < 120:
+                        temps.append(temp)
+            except:
+                pass
+        if temps:
+            return [round(max(temps), 1)]
+    except:
         pass
+    
     return []
 
 
