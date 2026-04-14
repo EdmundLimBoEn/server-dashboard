@@ -666,11 +666,11 @@
             document.getElementById('disk-value').innerHTML = data.disk_used + '<span style="color: var(--text-dim);">/</span>' + data.disk_total + '<span style="font-size: 12px; color: var(--text-dim);">GB</span>';
             document.getElementById('disk-bar').style.width = data.disk_percent + '%';
             
-            drawSparkline('cpu-sparkline', data.cpu_history);
-            drawSparkline('ram-sparkline', data.ram_history);
+            drawSparkline('cpu-sparkline', data.cpu_history, 'CPU');
+            drawSparkline('ram-sparkline', data.ram_history, 'RAM');
         }
         
-        function drawSparkline(canvasId, history) {
+        function drawSparkline(canvasId, history, label) {
             const canvas = document.getElementById(canvasId);
             if (!canvas || !history || history.length < 2) return;
             
@@ -687,6 +687,7 @@
             const styles = getComputedStyle(document.documentElement);
             const color = styles.getPropertyValue('--accent').trim();
             const dimColor = styles.getPropertyValue('--accent-dim').trim();
+            const textColor = styles.getPropertyValue('--text-dim').trim();
             
             const gradient = ctx.createLinearGradient(0, 0, w, 0);
             gradient.addColorStop(0, dimColor);
@@ -722,11 +723,78 @@
             ctx.strokeStyle = gradient;
             ctx.lineWidth = 2;
             ctx.stroke();
+            
+            canvas.onmousemove = function(e) {
+                const rect = canvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const idx = Math.round((x / w) * (history.length - 1));
+                if (idx >= 0 && idx < history.length) {
+                    const val = history[idx];
+                    const px = (idx / (history.length - 1)) * w;
+                    const py = h - ((val - min) / (max - min)) * h;
+                    
+                    ctx.clearRect(0, 0, w, h);
+                    ctx.fillStyle = fillGrad;
+                    ctx.fill();
+                    
+                    ctx.beginPath();
+                    ctx.moveTo(0, h);
+                    history.forEach((v, i) => {
+                        const lx = (i / (history.length - 1)) * w;
+                        const ly = h - ((v - min) / (max - min)) * h;
+                        ctx.lineTo(lx, ly);
+                    });
+                    ctx.lineTo(w, h);
+                    ctx.closePath();
+                    ctx.fill();
+                    
+                    ctx.beginPath();
+                    history.forEach((v, i) => {
+                        const lx = (i / (history.length - 1)) * w;
+                        const ly = h - ((v - min) / (max - min)) * h;
+                        if (i === 0) ctx.moveTo(lx, ly);
+                        else ctx.lineTo(lx, ly);
+                    });
+                    ctx.strokeStyle = gradient;
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                    
+                    ctx.beginPath();
+                    ctx.moveTo(px, 0);
+                    ctx.lineTo(px, h);
+                    ctx.strokeStyle = textColor + '40';
+                    ctx.lineWidth = 1;
+                    ctx.setLineDash([4, 4]);
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+                    
+                    ctx.beginPath();
+                    ctx.arc(px, py, 5, 0, Math.PI * 2);
+                    ctx.fillStyle = color;
+                    ctx.fill();
+                    ctx.strokeStyle = styles.getPropertyValue('--bg-card').trim();
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                    
+                    ctx.font = '11px IBM Plex Mono';
+                    ctx.fillStyle = styles.getPropertyValue('--text').trim();
+                    const tooltipX = px < w/2 ? px + 10 : px - 50;
+                    ctx.fillRect(tooltipX, py - 25, 40, 18);
+                    ctx.fillStyle = color;
+                    ctx.fillText(val.toFixed(1) + '%', tooltipX + 4, py - 12);
+                }
+            };
+            
+            canvas.onmouseleave = function() {
+                drawSparkline(canvasId, history, label);
+            };
         }
         
         function initSparklines() {
-            drawSparkline('cpu-sparkline', document.getElementById('cpu-sparkline').dataset.history.split(',').map(Number));
-            drawSparkline('ram-sparkline', document.getElementById('ram-sparkline').dataset.history.split(',').map(Number));
+            const cpuHistory = document.getElementById('cpu-sparkline').dataset.history.split(',').map(Number);
+            const ramHistory = document.getElementById('ram-sparkline').dataset.history.split(',').map(Number);
+            drawSparkline('cpu-sparkline', cpuHistory, 'CPU');
+            drawSparkline('ram-sparkline', ramHistory, 'RAM');
         }
         
         setInterval(function() {
