@@ -218,8 +218,11 @@ def get_system_stats():
     alerts = []
     
     vm = psutil.virtual_memory()
+    swap = psutil.swap_memory()
     disk = psutil.disk_usage("/")
     cpu_percent = psutil.cpu_percent(interval=None)
+    
+    boot_dt = datetime.fromtimestamp(psutil.boot_time(), TZ)
     
     cpu_history.append(cpu_percent)
     ram_history.append(vm.percent)
@@ -247,16 +250,31 @@ def get_system_stats():
 
     processes.sort(key=lambda x: x["cpu"], reverse=True)
     top_processes = processes[:5]
+    
+    try:
+        result = subprocess.run(
+            ["systemctl", "list-units", "--type=service", "--state=running", "--no-pager", "--plain"],
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+        running_services = len([l for l in result.stdout.split("\n") if ".service" in l])
+    except:
+        running_services = 0
 
     return {
         "cpu": cpu_percent,
         "ram_used": vm.used // (1024**3),
         "ram_total": vm.total // (1024**3),
         "ram_percent": vm.percent,
+        "swap_used": swap.used // (1024**3),
+        "swap_total": swap.total // (1024**3),
+        "swap_percent": swap.percent,
         "disk_used": disk.used // (1024**3),
         "disk_total": disk.total // (1024**3),
         "disk_percent": disk.percent,
         "uptime": get_uptime(),
+        "boot_time": boot_dt.strftime("%b %d, %Y %H:%M"),
         "load": get_loadavg(),
         "tailscale_ip": get_tailscale_ip(),
         "pings": get_pings(),
@@ -266,6 +284,7 @@ def get_system_stats():
         "failed_services": get_failed_services(),
         "docker_stats": get_docker_stats(),
         "network_traffic": get_network_traffic(),
+        "running_services": running_services,
         "alerts": alerts,
         "cpu_history": list(cpu_history),
         "ram_history": list(ram_history),

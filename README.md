@@ -1,26 +1,44 @@
 # Server Dashboard
 
-A simple, self-hosted server monitoring dashboard running in Docker.
+A refined, industrial-styled server monitoring dashboard with a distinctive terminal aesthetic. Self-hosted in Docker.
+
+![Dashboard Preview](https://via.placeholder.com/800x400/0a0a0f/00ff9f?text=Server+Dashboard)
 
 ## Features
 
-- **Ping** - Latency to 1.1.1.1 and 8.8.8.8
-- **Uptime** - Server uptime
-- **Tailscale IP** - Your Tailscale IP address (auto-detected)
-- **CPU/RAM/Disk** - Real-time usage with progress bars
-- **Temperature** - CPU temperature (via lm-sensors)
-- **Network Traffic** - Bytes sent/received per interface
-- **Upgradable Packages** - List of packages that can be updated
+### Connectivity
+- **Latency** - Ping to 1.1.1.1 and 8.8.8.8 with color-coded status dots (green/yellow/red)
+- **Uptime** - Server uptime with boot timestamp
+- **Tailscale IP** - Auto-detected Tailscale IP address
+
+### System Resources
+- **CPU** - Real-time usage with animated gradient progress bar
+- **Memory** - RAM and Swap usage with combined progress indicator
+- **Storage** - Disk usage with progress bar
+- **Temperature** - CPU temperature via lm-sensors
+
+### Services
+- **Docker** - Running container count and status
+- **Systemd** - Running services count with failed services warning
+- **Load Average** - 1m, 5m, 15m load averages
+- **Network I/O** - Bytes sent/received per interface
+
+### Applications
+- **Updates** - Upgradable packages list
 - **Top Processes** - Top 5 processes by CPU usage
-- **Dark/Light Theme** - Toggle button in header
-- **Auto-refresh** - Updates every 5 seconds without layout shift
-- **Alerts** - Warning when CPU or RAM exceeds 90%
+
+### UI/UX
+- **Dark/Light Theme** - Toggle with ◐ button
+- **Live Updates** - Auto-refreshes every 5 seconds with "Updated Xs ago" indicator
+- **Refined Industrial Aesthetic** - IBM Plex Mono + DM Sans fonts, electric mint accent (#00ff9f)
+- **Smooth Animations** - Staggered card fade-in, progress bar transitions
+- **Responsive** - Works on desktop and mobile
 
 ## Quick Start
 
 ```bash
 # Clone and run
-git clone <your-repo>/server-dashboard.git
+git clone https://github.com/EdmundLimBoEn/server-dashboard.git
 cd server-dashboard
 docker compose up -d
 ```
@@ -46,7 +64,7 @@ environment:
 
 ### Changing the Fallback Tailscale IP
 
-If your server has a different Tailscale IP range, set:
+If your server has a different Tailscale IP range:
 ```yaml
 environment:
   - FALLBACK_TAILSCALE_IP=100.x.x.x
@@ -55,14 +73,46 @@ environment:
 ### Port
 
 The dashboard runs on port `0310` (mapped to internal port 310).
+```yaml
+ports:
+  - "0310:310"  # Default
+  # or
+  - "8080:310"  # Custom external port
+```
 
 ## Accessing the Dashboard
 
 ### Over Tailscale
-Access using your Tailscale IP: `http://100.x.x.x:0310`
+`http://100.x.x.x:0310`
 
 ### Over LAN
-Access using your server's LAN IP: `http://192.168.x.x:0310`
+`http://192.168.x.x:0310`
+
+## Customization
+
+### Alert Threshold
+Edit `app.py`:
+```python
+ALERT_THRESHOLD = 90  # Percentage for alerts
+```
+
+### Refresh Interval
+Edit `templates/index.html`:
+```javascript
+}, 5000);  // Change to preferred interval in ms
+```
+
+### Changing Colors
+Edit CSS variables in `templates/index.html`:
+```css
+:root {
+    --accent: #00ff9f;     /* Primary accent (electric mint) */
+    --warning: #ffb800;    /* Warning color (amber) */
+    --danger: #ff4757;     /* Danger color (coral) */
+    --bg: #0a0a0f;         /* Background (deep charcoal) */
+    --bg-card: #12121a;    /* Card background */
+}
+```
 
 ## Updating
 
@@ -79,42 +129,19 @@ docker compose up -d
 docker compose down
 ```
 
-## Customization
-
-### Alert Threshold
-Edit `app.py` to change the alert percentage (default: 90%):
-```python
-ALERT_THRESHOLD = 90  # Change this value
-```
-
-### Refresh Interval
-The dashboard auto-refreshes every 5 seconds. To change, edit `templates/index.html`:
-```javascript
-setInterval(async function() {
-    // Change 5000 to your preferred interval in ms
-}, 5000);
-```
-
 ## Troubleshooting
 
 ### Temperature not showing
-- Ensure `lm-sensors` is installed on the host: `sudo apt install lm-sensors`
-- The container needs `/dev` mounted for sensor access
+- Ensure `lm-sensors` is installed: `sudo apt install lm-sensors`
+- Container needs `/dev` mounted for sensor access
 
 ### Docker stats not showing
 - Currently blocked by AppArmor in container
-- Workaround: View via `docker stats` on the server
+- View via `docker stats` on the server
 
-### Tailscale IP not detected
-- Set the fallback IP in environment variables
-- Or run `ip addr show` on server to verify Tailscale interface
-
-### Port already in use
-- Change the port in `docker-compose.yml`:
-  ```yaml
-  ports:
-    - "8080:310"  # Now accessible at port 8080
-  ```
+### Services count shows 0
+- Systemd access requires `/run/systemd/system` mount
+- If not needed, this is optional
 
 ## Requirements
 
@@ -122,15 +149,26 @@ setInterval(async function() {
 - Linux server (tested on Ubuntu)
 - Tailscale (optional, for remote access)
 
+## Design
+
+- **Typography**: IBM Plex Mono (headers), DM Sans (body)
+- **Colors**: Deep charcoal background (#0a0a0f), electric mint accent (#00ff9f)
+- **Style**: Refined industrial terminal aesthetic with subtle glows and smooth animations
+
 ## File Structure
 
 ```
 server-dashboard/
-├── app.py              # FastAPI application
-├── Dockerfile          # Container definition
-├── docker-compose.yml # Docker Compose config
-├── requirements.txt   # Python dependencies
-├── templates/
-│   └── index.html     # Dashboard UI
-└── README.md          # This file
+├── app.py                   # FastAPI application
+├── Dockerfile              # Container definition
+├── docker-compose.yml       # Docker Compose config
+├── requirements.txt        # Python dependencies
+├── README.md               # This file
+└── templates/
+    ├── index.html          # Dashboard UI
+    └── fragments/          # HTMX partials (optional)
 ```
+
+## License
+
+MIT
