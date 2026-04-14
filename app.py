@@ -85,6 +85,7 @@ def get_pings():
     hosts = [
         ("1.1.1.1", "Cloudflare"),
         ("8.8.8.8", "Google"),
+        ("google.com", "Google DNS"),
     ]
     results = []
     for host, name in hosts:
