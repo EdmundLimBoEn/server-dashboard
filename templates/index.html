@@ -777,11 +777,16 @@
                     ctx.stroke();
                     
                     ctx.font = '11px IBM Plex Mono';
-                    ctx.fillStyle = styles.getPropertyValue('--text').trim();
                     const tooltipX = px < w/2 ? px + 10 : px - 50;
-                    ctx.fillRect(tooltipX, py - 25, 40, 18);
-                    ctx.fillStyle = color;
-                    ctx.fillText(val.toFixed(1) + '%', tooltipX + 4, py - 12);
+                    ctx.fillStyle = styles.getPropertyValue('--bg-card').trim();
+                    ctx.strokeStyle = styles.getPropertyValue('--text').trim();
+                    ctx.lineWidth = 1;
+                    ctx.beginPath();
+                    ctx.roundRect(tooltipX, py - 25, 45, 20, 4);
+                    ctx.fill();
+                    ctx.stroke();
+                    ctx.fillStyle = styles.getPropertyValue('--accent').trim();
+                    ctx.fillText(val.toFixed(1) + '%', tooltipX + 8, py - 12);
                 }
             };
             

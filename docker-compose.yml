@@ -5,8 +5,8 @@ services:
     ports:
       - "0310:0310"
     environment:
-      - DASHBOARD_TITLE=Server Dashboard
-      - FALLBACK_TAILSCALE_IP=100.83.252.53
+      - DASHBOARD_TITLE=${DASHBOARD_TITLE:-Server Dashboard}
+      - FALLBACK_TAILSCALE_IP=${FALLBACK_TAILSCALE_IP:-100.83.252.53}
     volumes:
       - /proc:/proc:ro
       - /var/lib/apt/lists:/var/lib/apt/lists:ro
