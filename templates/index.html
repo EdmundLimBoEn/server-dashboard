@@ -1,0 +1,940 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0a0a0f;
+            --bg-card: #12121a;
+            --bg-card-hover: #18181f;
+            --border: #1e1e2a;
+            --text: #e8e8ed;
+            --text-dim: #6b6b7a;
+            --text-muted: #4a4a55;
+            --accent: #00ff9f;
+            --accent-dim: #00cc7f;
+            --warning: #ffb800;
+            --warning-dim: #cc9300;
+            --danger: #ff4757;
+            --danger-dim: #cc3945;
+            --glow: rgba(0, 255, 159, 0.15);
+            --font-mono: 'IBM Plex Mono', monospace;
+            --font-sans: 'DM Sans', sans-serif;
+        }
+        [data-theme="light"] {
+            --bg: #f4f4f7;
+            --bg-card: #ffffff;
+            --bg-card-hover: #fafafa;
+            --border: #e0e0e5;
+            --text: #1a1a1f;
+            --text-dim: #6b6b7a;
+            --text-muted: #9a9aa5;
+            --accent: #00c878;
+            --accent-dim: #00a061;
+            --warning: #cc9300;
+            --warning-dim: #b38200;
+            --danger: #e63b4a;
+            --danger-dim: #cc3340;
+            --glow: rgba(0, 200, 120, 0.1);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: var(--font-sans);
+            background: var(--bg);
+            color: var(--text);
+            padding: 20px;
+            min-height: 100vh;
+            line-height: 1.5;
+        }
+        
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 24px;
+        }
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .logo {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dim) 100%);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: var(--font-mono);
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--bg);
+        }
+        h1 {
+            font-family: var(--font-mono);
+            font-size: 20px;
+            font-weight: 500;
+            color: var(--text);
+            letter-spacing: -0.5px;
+        }
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        .last-updated {
+            font-family: var(--font-mono);
+            font-size: 12px;
+            color: var(--text-dim);
+        }
+        .last-updated span {
+            color: var(--accent);
+        }
+        .theme-toggle {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            color: var(--text-dim);
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.2s;
+        }
+        .theme-toggle:hover {
+            background: var(--bg-card-hover);
+            border-color: var(--accent);
+        }
+        
+        /* Section Labels */
+        .section-label {
+            font-family: var(--font-mono);
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            user-select: none;
+        }
+        .section-label:hover {
+            color: var(--text-dim);
+        }
+        .section-label .collapse-icon {
+            transition: transform 0.2s;
+            font-size: 10px;
+        }
+        .section-label.collapsed .collapse-icon {
+            transform: rotate(-90deg);
+        }
+        .section-label::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--border);
+        }
+        .section-grid {
+            transition: max-height 0.3s ease, opacity 0.3s ease;
+            overflow: hidden;
+            max-height: 2000px;
+            opacity: 1;
+        }
+        .section-grid.collapsed {
+            max-height: 0;
+            opacity: 0;
+            margin-bottom: 0;
+        }
+        
+        /* Grid */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+        .grid-wide {
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        }
+        
+        /* Cards */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px;
+            transition: all 0.2s;
+        }
+        .card:hover {
+            border-color: var(--text-muted);
+        }
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        .card h3 {
+            font-family: var(--font-mono);
+            font-size: 11px;
+            font-weight: 500;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .card-value {
+            font-family: var(--font-mono);
+            font-size: 28px;
+            font-weight: 600;
+            color: var(--text);
+            line-height: 1.2;
+        }
+        .card-value.small {
+            font-size: 18px;
+        }
+        .card-value.accent {
+            color: var(--accent);
+            text-shadow: 0 0 20px var(--glow);
+        }
+        
+        /* Progress Bar */
+        .progress-container {
+            margin-top: 12px;
+        }
+        .progress-label {
+            display: flex;
+            justify-content: space-between;
+            font-family: var(--font-mono);
+            font-size: 11px;
+            color: var(--text-dim);
+            margin-bottom: 6px;
+        }
+        .progress-bar {
+            height: 6px;
+            background: var(--border);
+            border-radius: 3px;
+            overflow: hidden;
+            position: relative;
+        }
+        .progress-fill {
+            height: 100%;
+            border-radius: 3px;
+            transition: width 0.5s ease;
+            background: linear-gradient(90deg, var(--accent-dim), var(--accent));
+            box-shadow: 0 0 10px var(--glow);
+        }
+        .progress-fill.warning {
+            background: linear-gradient(90deg, var(--warning-dim), var(--warning));
+            box-shadow: 0 0 10px rgba(255, 184, 0, 0.15);
+        }
+        .progress-fill.danger {
+            background: linear-gradient(90deg, var(--danger-dim), var(--danger));
+            box-shadow: 0 0 10px rgba(255, 71, 87, 0.15);
+        }
+        
+        /* Sparkline */
+        .sparkline {
+            width: 100%;
+            height: 40px;
+            margin-top: 8px;
+        }
+        .sparkline-label {
+            font-family: var(--font-mono);
+            font-size: 10px;
+            color: var(--text-muted);
+            margin-top: 4px;
+            text-align: right;
+        }
+        
+        /* Ping */
+        .ping-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border);
+        }
+        .ping-item:last-child { border-bottom: none; }
+        .ping-host {
+            font-family: var(--font-mono);
+            font-size: 13px;
+            color: var(--text-dim);
+        }
+        .ping-result {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .ping-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+        .ping-dot.good { background: var(--accent); box-shadow: 0 0 8px var(--glow); }
+        .ping-dot.medium { background: var(--warning); box-shadow: 0 0 8px rgba(255, 184, 0, 0.3); }
+        .ping-dot.bad { background: var(--danger); box-shadow: 0 0 8px rgba(255, 71, 87, 0.3); }
+        .ping-ms {
+            font-family: var(--font-mono);
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text);
+        }
+        
+        /* IP Display */
+        .ip-display {
+            font-family: var(--font-mono);
+            font-size: 16px;
+            color: var(--accent);
+            background: var(--bg);
+            padding: 8px 12px;
+            border-radius: 4px;
+            border: 1px solid var(--border);
+            display: inline-block;
+        }
+        
+        /* Collapsible */
+        .collapsible-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            user-select: none;
+        }
+        .collapsible-header:hover .card {
+            border-color: var(--text-muted);
+        }
+        .collapse-icon {
+            font-family: var(--font-mono);
+            font-size: 14px;
+            color: var(--text-dim);
+            transition: transform 0.3s;
+        }
+        .collapse-icon.collapsed {
+            transform: rotate(-90deg);
+        }
+        .collapse-content {
+            max-height: 500px;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+        .collapse-content.collapsed {
+            max-height: 0;
+        }
+        
+        /* Tables */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-family: var(--font-mono);
+            font-size: 12px;
+        }
+        .data-table th {
+            text-align: left;
+            color: var(--text-dim);
+            font-weight: 500;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border);
+        }
+        .data-table td {
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border);
+            color: var(--text);
+        }
+        .data-table td:last-child { text-align: right; }
+        
+        /* Lists */
+        .data-list {
+            font-family: var(--font-mono);
+            font-size: 12px;
+        }
+        .data-list li {
+            display: flex;
+            justify-content: space-between;
+            padding: 6px 0;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-dim);
+        }
+        .data-list li:last-child { border-bottom: none; }
+        
+        /* Status Badge */
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-family: var(--font-mono);
+            font-size: 11px;
+            font-weight: 500;
+        }
+        .status-badge.good {
+            background: rgba(0, 255, 159, 0.1);
+            color: var(--accent);
+        }
+        .status-badge.warning {
+            background: rgba(255, 184, 0, 0.1);
+            color: var(--warning);
+        }
+        .status-badge.danger {
+            background: rgba(255, 71, 87, 0.1);
+            color: var(--danger);
+        }
+        
+        /* Alert */
+        .alert {
+            background: rgba(255, 71, 87, 0.1);
+            border: 1px solid var(--danger);
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-bottom: 20px;
+            font-family: var(--font-mono);
+            font-size: 13px;
+            color: var(--danger);
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        /* Stacked metrics */
+        .metric-stack {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        /* Footer */
+        .footer {
+            margin-top: 24px;
+            padding-top: 16px;
+            border-top: 1px solid var(--border);
+            font-family: var(--font-mono);
+            font-size: 11px;
+            color: var(--text-muted);
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .card {
+            animation: fadeIn 0.4s ease backwards;
+        }
+        .grid:nth-child(2) .card { animation-delay: 0.05s; }
+        .grid:nth-child(3) .card { animation-delay: 0.1s; }
+        .grid:nth-child(4) .card { animation-delay: 0.15s; }
+        
+        /* Mobile */
+        @media (max-width: 600px) {
+            body { padding: 12px; }
+            .header { flex-direction: column; gap: 12px; align-items: flex-start; }
+            .grid { grid-template-columns: 1fr 1fr; }
+            .grid-wide { grid-template-columns: 1fr; }
+            .card-value { font-size: 22px; }
+            .card-value.small { font-size: 16px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-left">
+            <div class="logo" id="logo"></div>
+            <h1>{{ title }}</h1>
+        </div>
+        <div class="header-right">
+            <div class="last-updated">Updated <span id="update-time">0s</span> ago</div>
+            <button class="theme-toggle" onclick="toggleTheme()">◐</button>
+        </div>
+    </div>
+    
+    {% if stats.alerts %}
+    <div class="alert">
+        ⚠ {% for alert in stats.alerts %}{{ alert }}{% if not loop.last %}, {% endif %}{% endfor %}
+    </div>
+    {% endif %}
+    
+    <!-- CONNECTIVITY -->
+    <div class="section-label" onclick="toggleSection(this)">
+        <span class="collapse-icon">▼</span> Connectivity
+    </div>
+    <div class="grid section-grid">
+        <div class="card">
+            <h3>Latency</h3>
+            <div class="ping-list">
+                {% if stats.pings %}
+                {% for p in stats.pings %}
+                <div class="ping-item">
+                    <span class="ping-host">{{ p.host }}</span>
+                    <div class="ping-result">
+                        <div class="ping-dot {{ 'good' if p.ms < 50 else 'medium' if p.ms < 100 else 'bad' }}"></div>
+                        <span class="ping-ms">{{ p.ms }}ms</span>
+                    </div>
+                </div>
+                {% endfor %}
+                {% else %}
+                <div class="ping-item">
+                    <span class="ping-host" style="color: var(--danger);">No response</span>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        <div class="card">
+            <h3>Uptime</h3>
+            <div class="card-value small accent">{{ stats.uptime }}</div>
+            <div style="font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); margin-top: 8px;">
+                Last boot: {{ stats.boot_time }}
+            </div>
+        </div>
+        <div class="card">
+            <h3>Tailscale</h3>
+            <div class="ip-display">{{ stats.tailscale_ip }}</div>
+        </div>
+    </div>
+    
+    <!-- SYSTEM -->
+    <div class="section-label" onclick="toggleSection(this)">
+        <span class="collapse-icon">▼</span> System Resources
+    </div>
+    <div class="grid section-grid">
+        <div class="card">
+            <h3>CPU</h3>
+            <div class="card-value" id="cpu-value">{{ stats.cpu }}<span style="font-size: 14px; color: var(--text-dim);">%</span></div>
+            <div class="progress-container">
+                <div class="progress-bar">
+                    <div class="progress-fill {{ 'warning' if stats.cpu > 70 else 'danger' if stats.cpu > 90 else '' }}" 
+                         id="cpu-bar" style="width: {{ stats.cpu }}%"></div>
+                </div>
+            </div>
+            <canvas class="sparkline" id="cpu-sparkline" data-history="{{ stats.cpu_history|join(',') }}"></canvas>
+            <div class="sparkline-label">Last 60 readings (5s interval)</div>
+        </div>
+        
+        <div class="card">
+            <h3>Memory</h3>
+            <div class="card-value small" id="ram-value">{{ stats.ram_used }}<span style="color: var(--text-dim);">/</span>{{ stats.ram_total }}<span style="font-size: 12px; color: var(--text-dim);">GB</span></div>
+            <div class="progress-container">
+                <div class="progress-bar">
+                    <div class="progress-fill {{ 'warning' if stats.ram_percent > 70 else 'danger' if stats.ram_percent > 90 else '' }}" 
+                         id="ram-bar" style="width: {{ stats.ram_percent }}%"></div>
+                </div>
+                <div class="progress-label">
+                    <span>RAM {{ stats.ram_percent }}%</span>
+                    <span>Swap {{ stats.swap_percent }}%</span>
+                </div>
+            </div>
+            <canvas class="sparkline" id="ram-sparkline" data-history="{{ stats.ram_history|join(',') }}"></canvas>
+            <div class="sparkline-label">Last 60 readings (5s interval)</div>
+        </div>
+        
+        <div class="card">
+            <h3>Storage</h3>
+            <div class="card-value small" id="disk-value">{{ stats.disk_used }}<span style="color: var(--text-dim);">/</span>{{ stats.disk_total }}<span style="font-size: 12px; color: var(--text-dim);">GB</span></div>
+            <div class="progress-container">
+                <div class="progress-bar">
+                    <div class="progress-fill {{ 'warning' if stats.disk_percent > 70 else 'danger' if stats.disk_percent > 90 else '' }}" 
+                         id="disk-bar" style="width: {{ stats.disk_percent }}%"></div>
+                </div>
+                <div class="progress-label">
+                    <span>{{ stats.disk_percent }}% used</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <h3>Temperature</h3>
+            {% if stats.temperature %}
+            <div class="card-value small accent">
+                {% for temp in stats.temperature %}{{ temp }}°C{% if not loop.last %}, {% endif %}{% endfor %}
+            </div>
+            {% else %}
+            <div class="card-value small" style="color: var(--text-muted);">N/A</div>
+            {% endif %}
+        </div>
+    </div>
+    
+<!-- SERVICES -->
+    <div class="section-label" onclick="toggleSection(this)">
+        <span class="collapse-icon">▼</span> Services
+    </div>
+    <div class="grid section-grid">
+        <div class="card">
+            <h3>Docker</h3>
+            {% if stats.docker_stats %}
+            <div class="card-value accent">{{ stats.docker_stats|length }}</div>
+            <table class="data-table" style="margin-top: 8px;">
+                {% for c in stats.docker_stats %}
+                <tr>
+                    <td>{{ c.name[:20] }}</td>
+                    <td>CPU: {{ c.cpu }}%</td>
+                    <td>Mem: {{ c.mem }}%</td>
+                </tr>
+                {% endfor %}
+            </table>
+            {% else %}
+            <div class="card-value small" style="color: var(--text-muted);">0</div>
+            <div class="status-badge warning">No containers</div>
+            {% endif %}
+        </div>
+        
+        <div class="card">
+            <h3>Fan</h3>
+            {% if stats.fan.rpm > 0 %}
+            <div class="card-value accent">{{ stats.fan.rpm }}</div>
+            <div style="font-family: var(--font-mono); font-size: 11px; color: var(--text-dim);">RPM</div>
+            {% else %}
+            <div class="card-value small" style="color: var(--text-muted);">N/A</div>
+            {% endif %}
+        </div>
+        
+        <div class="card">
+            <h3>CPU Freq</h3>
+            {% if stats.cpu_freq.current > 0 %}
+            <div class="card-value small">{{ stats.cpu_freq.current }}<span style="font-size: 12px; color: var(--text-dim);"> MHz</span></div>
+            <div style="font-family: var(--font-mono); font-size: 11px; color: var(--text-dim); margin-top: 4px;">
+                {{ stats.cpu_freq.min }}-{{ stats.cpu_freq.max }} MHz | {{ stats.cpu_governor }}
+            </div>
+            {% else %}
+            <div class="card-value small" style="color: var(--text-muted);">N/A</div>
+            {% endif %}
+        </div>
+        
+        <div class="card">
+            <h3>Disk I/O</h3>
+            <div class="data-list">
+                <li><span>Read</span><span style="color: var(--accent);">{{ stats.disk_io.read_mb }} MB/s</span></li>
+                <li><span>Write</span><span style="color: var(--warning);">{{ stats.disk_io.write_mb }} MB/s</span></li>
+            </div>
+        </div>
+        
+        <div class="card">
+            <h3>Systemd</h3>
+            <div class="card-value small">{{ stats.running_services }}</div>
+            <div style="font-family: var(--font-mono); font-size: 11px; color: var(--text-dim); margin-top: 4px;">
+                services running
+            </div>
+            {% if stats.failed_services %}
+            <div class="status-badge danger" style="margin-top: 8px;">
+                {{ stats.failed_services|length }} failed
+            </div>
+            {% endif %}
+        </div>
+        
+        <div class="card">
+            <h3>Load Average</h3>
+            <div class="card-value small" id="load-value">
+                {{ stats.load['1m'] }} <span style="color: var(--text-muted); font-size: 12px;">/</span> 
+                {{ stats.load['5m'] }} <span style="color: var(--text-muted); font-size: 12px;">/</span> 
+                {{ stats.load['15m'] }}
+            </div>
+        </div>
+        
+        {% if stats.network_traffic %}
+        <div class="card">
+            <h3>Network I/O</h3>
+            <div class="data-list">
+                {% for iface, data in stats.network_traffic.items() %}
+                <li><span>{{ iface }}</span><span>↑{{ data.bytes_sent }}MB ↓{{ data.bytes_recv }}MB</span></li>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+        
+        <div class="card">
+            <h3>Systemd</h3>
+            <div class="card-value small">{{ stats.running_services }}</div>
+            <div style="font-family: var(--font-mono); font-size: 11px; color: var(--text-dim); margin-top: 4px;">
+                services running
+            </div>
+            {% if stats.failed_services %}
+            <div class="status-badge danger" style="margin-top: 8px;">
+                {{ stats.failed_services|length }} failed
+            </div>
+            {% endif %}
+        </div>
+        
+        <div class="card">
+            <h3>Load Average</h3>
+            <div class="card-value small" id="load-value">
+                {{ stats.load['1m'] }} <span style="color: var(--text-muted); font-size: 12px;">/</span> 
+                {{ stats.load['5m'] }} <span style="color: var(--text-muted); font-size: 12px;">/</span> 
+                {{ stats.load['15m'] }}
+            </div>
+        </div>
+        
+        {% if stats.network_traffic %}
+        <div class="card">
+            <h3>Network I/O</h3>
+            <div class="data-list">
+                {% for iface, data in stats.network_traffic.items() %}
+                <li>
+                    <span>{{ iface }}</span>
+                    <span>↑{{ data.bytes_sent }}MB ↓{{ data.bytes_recv }}MB</span>
+                </li>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    
+    <!-- APPLICATIONS -->
+    <div class="section-label" onclick="toggleSection(this)">
+        <span class="collapse-icon">▼</span> Applications
+    </div>
+    <div class="grid grid-wide section-grid">
+        <div class="card">
+            <h3>Updates</h3>
+            {% if stats.upgradable_packages %}
+            <div class="card-value small accent">{{ stats.upgradable_packages|length }}</div>
+            <ul class="data-list" style="margin-top: 8px;">
+                {% for pkg in stats.upgradable_packages %}
+                <li><span>{{ pkg }}</span><span style="color: var(--warning);">upgrade</span></li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <div class="card-value small" style="color: var(--text-muted);">System up to date</div>
+            {% endif %}
+        </div>
+        
+        <div class="card">
+            <h3>Top Processes</h3>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Process</th>
+                        <th>CPU</th>
+                        <th>MEM</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for proc in stats.top_processes %}
+                    <tr>
+                        <td>{{ proc.name }}</td>
+                        <td>{{ proc.cpu }}%</td>
+                        <td>{{ proc.mem }}%</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <div class="footer">
+        <div>Server Dashboard v1.0 | Kernel: {{ stats.kernel }}</div>
+        <div>Refresh: 5s | Timezone: Asia/Singapore</div>
+    </div>
+
+    <script>
+        let lastUpdate = Date.now();
+        
+        function toggleTheme() {
+            const html = document.documentElement;
+            const current = html.getAttribute('data-theme');
+            const next = current === 'dark' ? 'light' : 'dark';
+            html.setAttribute('data-theme', next);
+            localStorage.setItem('theme', next);
+        }
+        
+        function toggleSection(label) {
+            label.classList.toggle('collapsed');
+            const grid = label.nextElementSibling;
+            grid.classList.toggle('collapsed');
+            localStorage.setItem('section-' + label.textContent.trim(), label.classList.contains('collapsed') ? 'collapsed' : 'expanded');
+        }
+        
+        document.querySelectorAll('.section-label').forEach(label => {
+            const sectionName = label.textContent.trim();
+            const state = localStorage.getItem('section-' + sectionName);
+            if (state === 'collapsed') {
+                label.classList.add('collapsed');
+                label.nextElementSibling.classList.add('collapsed');
+            }
+        });
+        
+        const savedTheme = localStorage.getItem('theme') || 'dark';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+        
+        const title = {{ title|tojson }};
+        document.getElementById('logo').textContent = title.charAt(0).toUpperCase();
+        
+        initSparklines();
+        
+        function updateTimeAgo() {
+            const seconds = Math.floor((Date.now() - lastUpdate) / 1000);
+            document.getElementById('update-time').textContent = seconds + 's';
+        }
+        
+        function updateStats(data) {
+            lastUpdate = Date.now();
+            document.getElementById('cpu-value').innerHTML = data.cpu + '<span style="font-size: 14px; color: var(--text-dim);">%</span>';
+            document.getElementById('cpu-bar').style.width = data.cpu + '%';
+            document.getElementById('ram-value').innerHTML = data.ram_used + '<span style="color: var(--text-dim);">/</span>' + data.ram_total + '<span style="font-size: 12px; color: var(--text-dim);">GB</span>';
+            document.getElementById('ram-bar').style.width = data.ram_percent + '%';
+            document.getElementById('disk-value').innerHTML = data.disk_used + '<span style="color: var(--text-dim);">/</span>' + data.disk_total + '<span style="font-size: 12px; color: var(--text-dim);">GB</span>';
+            document.getElementById('disk-bar').style.width = data.disk_percent + '%';
+            
+            drawSparkline('cpu-sparkline', data.cpu_history, 'CPU');
+            drawSparkline('ram-sparkline', data.ram_history, 'RAM');
+        }
+        
+        function drawSparkline(canvasId, history, label) {
+            const canvas = document.getElementById(canvasId);
+            if (!canvas || !history || history.length < 2) return;
+            
+            const ctx = canvas.getContext('2d');
+            const rect = canvas.getBoundingClientRect();
+            canvas.width = rect.width;
+            canvas.height = rect.height || 40;
+            const w = canvas.width;
+            const h = canvas.height;
+            
+            const max = Math.max(...history, 100);
+            const min = 0;
+            
+            const styles = getComputedStyle(document.documentElement);
+            const color = styles.getPropertyValue('--accent').trim();
+            const dimColor = styles.getPropertyValue('--accent-dim').trim();
+            const textColor = styles.getPropertyValue('--text-dim').trim();
+            
+            const gradient = ctx.createLinearGradient(0, 0, w, 0);
+            gradient.addColorStop(0, dimColor);
+            gradient.addColorStop(1, color);
+            
+            ctx.clearRect(0, 0, w, h);
+            
+            ctx.beginPath();
+            ctx.moveTo(0, h);
+            
+            history.forEach((val, i) => {
+                const x = (i / (history.length - 1)) * w;
+                const y = h - ((val - min) / (max - min)) * h;
+                ctx.lineTo(x, y);
+            });
+            
+            ctx.lineTo(w, h);
+            ctx.closePath();
+            
+            const fillGrad = ctx.createLinearGradient(0, 0, 0, h);
+            fillGrad.addColorStop(0, color + '40');
+            fillGrad.addColorStop(1, color + '05');
+            ctx.fillStyle = fillGrad;
+            ctx.fill();
+            
+            ctx.beginPath();
+            history.forEach((val, i) => {
+                const x = (i / (history.length - 1)) * w;
+                const y = h - ((val - min) / (max - min)) * h;
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            });
+            ctx.strokeStyle = gradient;
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            
+            canvas.onmousemove = function(e) {
+                const rect = canvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const idx = Math.round((x / w) * (history.length - 1));
+                if (idx >= 0 && idx < history.length) {
+                    const val = history[idx];
+                    const px = (idx / (history.length - 1)) * w;
+                    const py = h - ((val - min) / (max - min)) * h;
+                    
+                    ctx.clearRect(0, 0, w, h);
+                    ctx.fillStyle = fillGrad;
+                    ctx.fill();
+                    
+                    ctx.beginPath();
+                    ctx.moveTo(0, h);
+                    history.forEach((v, i) => {
+                        const lx = (i / (history.length - 1)) * w;
+                        const ly = h - ((v - min) / (max - min)) * h;
+                        ctx.lineTo(lx, ly);
+                    });
+                    ctx.lineTo(w, h);
+                    ctx.closePath();
+                    ctx.fill();
+                    
+                    ctx.beginPath();
+                    history.forEach((v, i) => {
+                        const lx = (i / (history.length - 1)) * w;
+                        const ly = h - ((v - min) / (max - min)) * h;
+                        if (i === 0) ctx.moveTo(lx, ly);
+                        else ctx.lineTo(lx, ly);
+                    });
+                    ctx.strokeStyle = gradient;
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                    
+                    ctx.beginPath();
+                    ctx.moveTo(px, 0);
+                    ctx.lineTo(px, h);
+                    ctx.strokeStyle = textColor + '40';
+                    ctx.lineWidth = 1;
+                    ctx.setLineDash([4, 4]);
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+                    
+                    ctx.beginPath();
+                    ctx.arc(px, py, 5, 0, Math.PI * 2);
+                    ctx.fillStyle = color;
+                    ctx.fill();
+                    ctx.strokeStyle = styles.getPropertyValue('--bg-card').trim();
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                    
+                    ctx.font = '11px IBM Plex Mono';
+                    const tooltipX = px < w/2 ? px + 10 : px - 50;
+                    ctx.fillStyle = styles.getPropertyValue('--bg-card').trim();
+                    ctx.strokeStyle = styles.getPropertyValue('--text').trim();
+                    ctx.lineWidth = 1;
+                    ctx.beginPath();
+                    ctx.roundRect(tooltipX, py - 25, 45, 20, 4);
+                    ctx.fill();
+                    ctx.stroke();
+                    ctx.fillStyle = styles.getPropertyValue('--accent').trim();
+                    ctx.fillText(val.toFixed(1) + '%', tooltipX + 8, py - 12);
+                }
+            };
+            
+            canvas.onmouseleave = function() {
+                drawSparkline(canvasId, history, label);
+            };
+        }
+        
+        function initSparklines() {
+            const cpuHistory = document.getElementById('cpu-sparkline').dataset.history.split(',').map(Number);
+            const ramHistory = document.getElementById('ram-sparkline').dataset.history.split(',').map(Number);
+            drawSparkline('cpu-sparkline', cpuHistory, 'CPU');
+            drawSparkline('ram-sparkline', ramHistory, 'RAM');
+        }
+        
+        setInterval(function() {
+            updateTimeAgo();
+        }, 1000);
+        
+        setInterval(async function() {
+            try {
+                const res = await fetch('/api/stats');
+                const data = await res.json();
+                updateStats(data);
+            } catch(e) {}
+        }, 5000);
+    </script>
+</body>
+</html>
